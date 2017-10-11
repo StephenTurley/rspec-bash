@@ -1,7 +1,7 @@
 module Rspec
   module Bash
     class CallLog
-      def initialize(call_log_path)
+      def initialize(call_log_path = '')
         @call_log_path = call_log_path
       end
 
