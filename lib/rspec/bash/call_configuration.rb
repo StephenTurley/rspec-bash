@@ -5,7 +5,7 @@ module Rspec
     class CallConfiguration
       attr_reader :command
 
-      def initialize(config_path, command)
+      def initialize(config_path = '', command = '')
         @config_path = config_path
         @configuration = []
         @command = command
