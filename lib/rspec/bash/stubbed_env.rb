@@ -16,15 +16,19 @@ module Rspec
 
       def initialize
         @dir = Dir.mktmpdir
-        call_log_manager = CallLogManager.new
-        call_conf_manager = CallConfigurationManager.new
+        create_stub_server
+        at_exit { cleanup }
+      end
+
+      def create_stub_server
+        @call_log_manager = CallLogManager.new
+        @call_conf_manager = CallConfigurationManager.new
         tcp_server = TCPServer.new('localhost', 0)
         stub_server = StubServer.new(
-          call_log_manager,
-          call_conf_manager
+          @call_log_manager,
+          @call_conf_manager
         )
         stub_server.start(tcp_server)
-        at_exit { cleanup }
       end
 
       def cleanup
@@ -32,7 +36,11 @@ module Rspec
       end
 
       def stub_command(command)
-        StubbedCommand.new(command, @dir)
+        StubbedCommand.new(
+          command,
+          @call_log_manager,
+          @call_conf_manager
+        )
       end
 
       def execute(command, env_vars = {})

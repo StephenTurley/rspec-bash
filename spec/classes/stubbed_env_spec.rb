@@ -372,13 +372,25 @@ describe 'StubbedEnv' do
       stub_server
     end
     context('#initialize') do
-      it 'creates and starts a StubServer' do
+      it('creates and starts a StubServer') do
         allow(server_thread).to receive(:kill)
 
         expect(stub_server).to receive(:start)
           .with(tcp_server)
 
         Rspec::Bash::StubbedEnv.new
+      end
+    end
+    context('#stub_command') do
+      let(:subject) { Rspec::Bash::StubbedEnv.new }
+      it('adds the call conf and log managers to the command') do
+        stub_command = double(Rspec::Bash::StubbedCommand)
+        expect(Rspec::Bash::StubbedCommand).to receive(:new)
+          .with('first_command', log_manager, conf_manager)
+          .and_return(stub_command)
+
+        command = subject.stub_command('first_command')
+        expect(command).to equal(stub_command)
       end
     end
   end
