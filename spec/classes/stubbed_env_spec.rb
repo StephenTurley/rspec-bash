@@ -340,4 +340,46 @@ describe 'StubbedEnv' do
       expect(Pathname.new(env.dir)).not_to exist
     end
   end
+
+  context('stub server') do
+    let(:server_thread) { double(Thread) }
+    let(:tcp_server) do
+      tcp_server = double(TCPServer)
+      allow(TCPServer).to receive(:new)
+        .with('localhost', 0)
+        .and_return(tcp_server)
+      tcp_server
+    end
+    let(:log_manager) do
+      log_manager = double(Rspec::Bash::CallLogManager)
+      allow(Rspec::Bash::CallLogManager).to receive(:new)
+        .and_return(log_manager)
+      log_manager
+    end
+    let(:conf_manager) do
+      conf_manager = double(Rspec::Bash::CallConfigurationManager)
+      allow(Rspec::Bash::CallConfigurationManager).to receive(:new)
+        .and_return(conf_manager)
+      conf_manager
+    end
+    let(:stub_server) do
+      stub_server = double(Rspec::Bash::StubServer)
+      allow(stub_server).to receive(:start)
+        .and_return(server_thread)
+      allow(Rspec::Bash::StubServer).to receive(:new)
+        .with(log_manager, conf_manager)
+        .and_return(stub_server)
+      stub_server
+    end
+    context('#initialize') do
+      it 'creates and starts a StubServer' do
+        allow(server_thread).to receive(:kill)
+
+        expect(stub_server).to receive(:start)
+          .with(tcp_server)
+
+        Rspec::Bash::StubbedEnv.new
+      end
+    end
+  end
 end
