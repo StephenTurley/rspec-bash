@@ -341,10 +341,12 @@ describe 'StubbedEnv' do
     end
   end
 
-  context('stub server') do
+  context('new style') do
     let(:server_thread) { double(Thread) }
     let(:tcp_server) do
       tcp_server = double(TCPServer)
+      allow(tcp_server).to receive(:addr)
+        .and_return(['ADDR', 4000])
       allow(TCPServer).to receive(:new)
         .with('localhost', 0)
         .and_return(tcp_server)
@@ -383,14 +385,57 @@ describe 'StubbedEnv' do
     end
     context('#stub_command') do
       let(:subject) { Rspec::Bash::StubbedEnv.new }
-      it('adds the call conf and log managers to the command') do
+      let!(:stub_command) do
         stub_command = double(Rspec::Bash::StubbedCommand)
+        allow(Rspec::Bash::StubbedCommand).to receive(:new)
+          .and_return(stub_command)
+        stub_command
+      end
+      it('adds the call conf and log managers to the command') do
         expect(Rspec::Bash::StubbedCommand).to receive(:new)
           .with('first_command', log_manager, conf_manager)
-          .and_return(stub_command)
 
         command = subject.stub_command('first_command')
         expect(command).to equal(stub_command)
+      end
+      it('adds the command to the function override list') do
+        subject.stub_command('first_command')
+        subject.stub_command('second_command')
+        expect(subject.create_function_list).to eql([
+          <<-multiline_script
+            function first_command {
+              ruby_command=$(which ruby)
+              ${ruby_command} -e '
+                require 'socket'
+                sock = TCPSocket.new('localhost', 4000)
+                call_from_client = { 
+                  command: 'first_command',
+                  stdin:   $stdin.read,
+                  args:    ARGV 
+                }   
+                sock.write(Marshal.dump(call_from_client))
+              ' "${@}"
+            }
+
+            readonly -f first_command &> /dev/null
+
+            function second_command {
+              ruby_command=$(which ruby)
+              ${ruby_command} -e '
+                require 'socket'
+                sock = TCPSocket.new('localhost', 4000)
+                call_from_client = { 
+                  command: 'second_command',
+                  stdin:   $stdin.read,
+                  args:    ARGV 
+                }   
+                sock.write(Marshal.dump(call_from_client))
+              ' "${@}"
+            }
+
+            readonly -f second_command &> /dev/null
+          multiline_script
+        ])
       end
     end
   end
