@@ -23,12 +23,13 @@ module Rspec
       def create_stub_server
         @call_log_manager = CallLogManager.new
         @call_conf_manager = CallConfigurationManager.new
-        tcp_server = TCPServer.new('localhost', 0)
+        tcp_server = TCPServer.new('localhost', 12345)
         stub_server = StubServer.new(
           @call_log_manager,
           @call_conf_manager
         )
         stub_server.start(tcp_server)
+        puts tcp_server.addr
       end
 
       def cleanup

@@ -387,8 +387,8 @@ describe 'StubbedEnv' do
       let(:subject) { Rspec::Bash::StubbedEnv.new }
       let!(:stub_command) do
         stub_command = double(Rspec::Bash::StubbedCommand)
-        allow(Rspec::Bash::StubbedCommand).to receive(:new)
-          .and_return(stub_command)
+        #allow(Rspec::Bash::StubbedCommand).to receive(:new)
+        #  .and_return(stub_command)
         stub_command
       end
       it('adds the call conf and log managers to the command') do
@@ -399,7 +399,7 @@ describe 'StubbedEnv' do
         expect(command).to equal(stub_command)
       end
       it('adds the command to the function override list') do
-        subject.stub_command('first_command')
+        subject.stub_command('first_command').outputs('hello')
         subject.stub_command('second_command')
         expect(subject.create_function_list).to eql([
           <<-multiline_script
